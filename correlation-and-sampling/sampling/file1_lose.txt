@@ -1,0 +1,12 @@
+[relationship, capital-gain, age] => marital-status, (Husband, 0, 40 || Married-civ-spouse) × 未挖出嵌入的FDs
+[relationship, education-num] => marital-status, (Husband, 4 || Married-civ-spouse) * 挖出了嵌入的FDs
+[relationship, age] => marital-status, (Husband, 33 || Married-civ-spouse) * 挖出了嵌入的FDs
+[relationship, education] => marital-status, (Husband, 7th-8th || Married-civ-spouse) × 挖出了嵌入的FDs
+[age, relationship] => marital-status, (50, Husband || Married-civ-spouse) * 挖出了嵌入的FDs
+[relationship, occupation] => marital-status, (Husband, Handlers-cleaners || Married-civ-spouse) × 挖出了嵌入的FDs
+
+[relationship, age] => marital-status, (Husband, 42 || Married-civ-spouse)
+[relationship, age] => marital-status, (Husband, 38 || Married-civ-spouse)
+[education-num] => education, (8 || 12th)
+[relationship, age] => marital-status, (Husband, 36 || Married-civ-spouse)
+[relationship, workclass] => marital-status, (Husband, Self-emp-inc || Married-civ-spouse)

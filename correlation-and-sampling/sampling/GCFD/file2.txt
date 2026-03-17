@@ -1,0 +1,147 @@
+(education=_) => education-num=_
+(education=Some-college) => education-num=10
+(education=HS-grad) => education-num=9
+(education-num=_) => education=_
+(education-num=10) => education=Some-college
+(education-num=9) => education=HS-grad
+(occupation=_, fnlwgt=_, relationship=Husband) => marital-status=_
+(hours-per-week=_, fnlwgt=_, relationship=Husband) => marital-status=_
+(occupation=_, fnlwgt=_, relationship=Husband) => sex=_
+(relationship=_, occupation=_, fnlwgt=_, education=Some-college) => sex=_
+(relationship=_, occupation=_, fnlwgt=_, education-num=10) => sex=_
+(hours-per-week=_, fnlwgt=_, relationship=Husband) => sex=_
+(hours-per-week=_, occupation=_, fnlwgt=_, relationship=Not-in-family) => sex=_
+(hours-per-week=_, relationship=_, occupation=_, education-num=_, fnlwgt=_) => sex=_
+(hours-per-week=_, relationship=_, occupation=_, education=_, fnlwgt=_) => sex=_
+(hours-per-week=_, occupation=_, marital-status=_, fnlwgt=_, education-num=9) => sex=_
+(hours-per-week=_, occupation=_, education-num=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(hours-per-week=_, occupation=_, marital-status=_, fnlwgt=_, education=HS-grad) => sex=_
+(hours-per-week=_, occupation=_, education=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(relationship=_, occupation=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(hours-per-week=_, relationship=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(hours-per-week=_, relationship=_, marital-status=_, fnlwgt=_, education-num=10) => sex=_
+(hours-per-week=_, relationship=_, marital-status=_, fnlwgt=_, education=Some-college) => sex=_
+(capital-gain=_, occupation=_, education-num=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(capital-gain=_, occupation=_, education=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(native-country=_, occupation=_, education-num=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(native-country=_, occupation=_, education=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(relationship=_, occupation=_, fnlwgt=_, education=Some-college) => race=_
+(hours-per-week=_, relationship=_, occupation=_, education=_, fnlwgt=_) => race=_
+(relationship=_, occupation=_, fnlwgt=_, education-num=10) => race=_
+(hours-per-week=_, relationship=_, occupation=_, education-num=_, fnlwgt=_) => race=_
+(relationship=_, occupation=_, marital-status=_, fnlwgt=_, education-num=9) => race=_
+(occupation=_, marital-status=_, education-num=_, fnlwgt=_, relationship=Not-in-family) => race=_
+(relationship=_, occupation=_, education-num=_, fnlwgt=_, marital-status=Never-married) => race=_
+(hours-per-week=_, relationship=_, marital-status=_, fnlwgt=_, education-num=10) => race=_
+(hours-per-week=_, marital-status=_, education-num=_, fnlwgt=_, relationship=Not-in-family) => race=_
+(hours-per-week=_, relationship=_, education-num=_, fnlwgt=_, marital-status=Never-married) => race=_
+(relationship=_, occupation=_, marital-status=_, fnlwgt=_, education=HS-grad) => race=_
+(occupation=_, marital-status=_, education=_, fnlwgt=_, relationship=Not-in-family) => race=_
+(relationship=_, occupation=_, education=_, fnlwgt=_, marital-status=Never-married) => race=_
+(hours-per-week=_, relationship=_, marital-status=_, fnlwgt=_, education=Some-college) => race=_
+(hours-per-week=_, marital-status=_, education=_, fnlwgt=_, relationship=Not-in-family) => race=_
+(hours-per-week=_, relationship=_, education=_, fnlwgt=_, marital-status=Never-married) => race=_
+(capital-gain=_, occupation=_, education-num=_, fnlwgt=_, relationship=Husband) => race=_
+(capital-gain=_, occupation=_, education=_, fnlwgt=_, relationship=Husband) => race=_
+(native-country=_, occupation=_, education-num=_, fnlwgt=_, relationship=Husband) => race=_
+(native-country=_, occupation=_, education=_, fnlwgt=_, relationship=Husband) => race=_
+(native-country=_, occupation=_, education-num=_, fnlwgt=_, marital-status=Married-civ-spouse) => race=_
+(native-country=_, occupation=_, education=_, fnlwgt=_, marital-status=Married-civ-spouse) => race=_
+(capital-loss=_, relationship=_, occupation=_, education-num=_, fnlwgt=_) => race=_
+(capital-loss=_, relationship=_, occupation=_, education=_, fnlwgt=_) => race=_
+(hours-per-week=_, race=_, occupation=_, fnlwgt=_, education-num=9) => sex=_
+(hours-per-week=_, race=_, occupation=_, fnlwgt=_, education=HS-grad) => sex=_
+(relationship=_, occupation=_, education-num=_, fnlwgt=_, sex=Female) => race=_
+(hours-per-week=_, relationship=_, education-num=_, fnlwgt=_, sex=Female) => race=_
+(relationship=_, occupation=_, education=_, fnlwgt=_, sex=Female) => race=_
+(hours-per-week=_, relationship=_, education=_, fnlwgt=_, sex=Female) => race=_
+(race=_, occupation=_, education-num=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(race=_, occupation=_, education=_, fnlwgt=_, marital-status=Married-civ-spouse) => sex=_
+(relationship=_, marital-status=_, education=_, fnlwgt=_, sex=Female) => race=_
+(sex=_, relationship=_, education=_, fnlwgt=_, marital-status=Never-married) => race=_
+(relationship=_, marital-status=_, education-num=_, fnlwgt=_, sex=Female) => race=_
+(sex=_, relationship=_, education-num=_, fnlwgt=_, marital-status=Never-married) => race=_
+(hours-per-week=_, relationship=_, fnlwgt=_, workclass=_, education=Some-college) => race=_
+(hours-per-week=_, relationship=_, fnlwgt=_, workclass=_, education-num=10) => race=_
+(occupation=_, education-num=_, fnlwgt=_, workclass=_, marital-status=Married-civ-spouse) => sex=_
+(occupation=_, education=_, fnlwgt=_, workclass=_, marital-status=Married-civ-spouse) => sex=_
+(hours-per-week=_, relationship=_, occupation=_, fnlwgt=_, workclass=Private) => sex=_
+(relationship=_, occupation=_, education-num=_, fnlwgt=_, workclass=_) => sex=_
+(relationship=_, occupation=_, education=_, fnlwgt=_, workclass=_) => sex=_
+(occupation=_, education=_, fnlwgt=_, age=_, marital-status=Married-civ-spouse) => relationship=_
+(occupation=_, education-num=_, fnlwgt=_, age=_, marital-status=Married-civ-spouse) => relationship=_
+(fnlwgt=_, age=_, education-num=10) => race=_
+(hours-per-week=_, occupation=_, education-num=_, fnlwgt=_, age=_) => race=_
+(fnlwgt=_, age=_, education=Some-college) => race=_
+(hours-per-week=_, occupation=_, education=_, fnlwgt=_, age=_) => race=_
+(capital-loss=_, occupation=_, fnlwgt=_, age=_, education=HS-grad) => race=_
+(capital-loss=_, occupation=_, fnlwgt=_, age=_, education-num=9) => race=_
+(hours-per-week=_, occupation=_, fnlwgt=_, workclass=_, age=_) => race=_
+(hours-per-week=_, fnlwgt=_, age=_, relationship=Not-in-family) => race=_
+(occupation=_, fnlwgt=_, age=_, relationship=Husband) => race=_
+(hours-per-week=_, relationship=_, occupation=_, fnlwgt=_, age=_) => race=_
+(education=_, fnlwgt=_, age=_, relationship=Husband) => race=_
+(hours-per-week=_, relationship=_, education=_, fnlwgt=_, age=_) => race=_
+(education-num=_, fnlwgt=_, age=_, relationship=Husband) => race=_
+(hours-per-week=_, relationship=_, education-num=_, fnlwgt=_, age=_) => race=_
+(native-country=_, hours-per-week=_, fnlwgt=_, age=_, relationship=Husband) => race=_
+(capital-loss=_, relationship=_, occupation=_, fnlwgt=_, age=_) => race=_
+(capital-loss=_, relationship=_, education-num=_, fnlwgt=_, age=_) => race=_
+(capital-loss=_, relationship=_, education=_, fnlwgt=_, age=_) => race=_
+(capital-loss=_, fnlwgt=_, workclass=_, age=_, relationship=Not-in-family) => race=_
+(native-country=_, capital-loss=_, fnlwgt=_, age=_, relationship=Husband) => race=_
+(native-country=_, capital-loss=_, fnlwgt=_, age=_, relationship=Not-in-family) => race=_
+(occupation=_, fnlwgt=_, age=_, marital-status=Never-married) => race=_
+(hours-per-week=_, occupation=_, marital-status=_, fnlwgt=_, age=_) => race=_
+(marital-status=_, education=_, fnlwgt=_, age=_) => race=_
+(marital-status=_, education-num=_, fnlwgt=_, age=_) => race=_
+(native-country=_, hours-per-week=_, fnlwgt=_, age=_, marital-status=Married-civ-spouse) => race=_
+(hours-per-week=_, fnlwgt=_, workclass=_, age=_, marital-status=Never-married) => race=_
+(capital-gain=_, occupation=_, marital-status=_, fnlwgt=_, age=_) => race=_
+(relationship=_, occupation=_, marital-status=_, fnlwgt=_, age=_) => race=_
+(marital-status=_, fnlwgt=_, workclass=_, age=_, relationship=Not-in-family) => race=_
+(native-country=_, marital-status=_, fnlwgt=_, age=_, relationship=Not-in-family) => race=_
+(occupation=_, fnlwgt=_, age=_, hours-per-week=40) => sex=_
+(hours-per-week=_, occupation=_, fnlwgt=_, age=_, education=HS-grad) => sex=_
+(hours-per-week=_, occupation=_, fnlwgt=_, age=_, education-num=9) => sex=_
+(occupation=_, fnlwgt=_, workclass=_, age=_, education-num=9) => sex=_
+(occupation=_, fnlwgt=_, workclass=_, age=_, education=HS-grad) => sex=_
+(hours-per-week=_, fnlwgt=_, age=_, marital-status=Married-civ-spouse) => sex=_
+(hours-per-week=_, occupation=_, marital-status=_, fnlwgt=_, age=_) => sex=_
+(marital-status=_, fnlwgt=_, age=_, education=Some-college) => sex=_
+(education=_, fnlwgt=_, age=_, marital-status=Never-married) => sex=_
+(hours-per-week=_, marital-status=_, education=_, fnlwgt=_, age=_) => sex=_
+(occupation=_, marital-status=_, education=_, fnlwgt=_, age=_) => sex=_
+(marital-status=_, fnlwgt=_, age=_, education-num=10) => sex=_
+(education-num=_, fnlwgt=_, age=_, marital-status=Never-married) => sex=_
+(hours-per-week=_, marital-status=_, education-num=_, fnlwgt=_, age=_) => sex=_
+(occupation=_, marital-status=_, education-num=_, fnlwgt=_, age=_) => sex=_
+(marital-status=_, education-num=_, fnlwgt=_, workclass=_, age=_) => sex=_
+(marital-status=_, education=_, fnlwgt=_, workclass=_, age=_) => sex=_
+(capital-gain=_, occupation=_, fnlwgt=_, age=_, marital-status=Married-civ-spouse) => sex=_
+(fnlwgt=_, age=_, relationship=Husband) => sex=_
+(hours-per-week=_, relationship=_, fnlwgt=_, age=_) => sex=_
+(relationship=_, education=_, fnlwgt=_, age=_) => sex=_
+(relationship=_, education-num=_, fnlwgt=_, age=_) => sex=_
+(relationship=_, fnlwgt=_, age=_, marital-status=Married-civ-spouse) => sex=_
+(hours-per-week=_, occupation=_, fnlwgt=_, age=_, sex=Male) => race=_
+(hours-per-week=_, race=_, fnlwgt=_, age=_, education=HS-grad) => sex=_
+(hours-per-week=_, sex=_, education=_, fnlwgt=_, age=_) => race=_
+(hours-per-week=_, race=_, fnlwgt=_, age=_, education-num=9) => sex=_
+(hours-per-week=_, sex=_, education-num=_, fnlwgt=_, age=_) => race=_
+(native-country=_, education-num=_, fnlwgt=_, age=_, sex=Female) => race=_
+(native-country=_, education=_, fnlwgt=_, age=_, sex=Female) => race=_
+(education-num=_, fnlwgt=_, age=_, workclass=Private, sex=Female) => race=_
+(education=_, fnlwgt=_, age=_, workclass=Private, sex=Female) => race=_
+(occupation=_, fnlwgt=_, age=_, workclass=Private, sex=Female) => race=_
+(race=_, occupation=_, fnlwgt=_, age=_, marital-status=Married-civ-spouse) => sex=_
+(sex=_, occupation=_, marital-status=_, fnlwgt=_, age=_) => race=_
+(native-country=_, marital-status=_, fnlwgt=_, age=_, sex=Female) => race=_
+(capital-loss=_, sex=_, fnlwgt=_, age=_, education-num=9) => race=_
+(capital-loss=_, education-num=_, fnlwgt=_, age=_, sex=Male) => race=_
+(capital-loss=_, sex=_, fnlwgt=_, age=_, education=HS-grad) => race=_
+(capital-loss=_, education=_, fnlwgt=_, age=_, sex=Male) => race=_
+(relationship=_, occupation=_, fnlwgt=_, age=_, sex=Female) => race=_
+(relationship=_, education-num=_, fnlwgt=_, age=_, sex=Female) => race=_
+(relationship=_, education=_, fnlwgt=_, age=_, sex=Female) => race=_
+(relationship=_, marital-status=_, fnlwgt=_, age=_, sex=Female) => race=_
