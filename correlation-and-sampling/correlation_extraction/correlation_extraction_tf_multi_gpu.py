@@ -8,15 +8,13 @@ from torch.utils.data import DataLoader, Dataset
 import os
 
 
-# --- [IoTProcessor, IoTDataset 类保持定义，微调契合大模型特征维度] ---
+# --- [IoTProcessor, IoTDataset 类定义，完全去除采样逻辑] ---
 
 class IoTProcessor:
-    def __init__(self, file_path, sample_n=2000):
-        full_df = pd.read_csv(file_path)
-        if len(full_df) > sample_n:
-            self.raw_df = full_df.sample(n=sample_n, random_state=42).reset_index(drop=True)
-        else:
-            self.raw_df = full_df
+    def __init__(self, file_path):
+        # 彻底去除 sample_n 采样逻辑，直接全量读取原始 CSV 数据
+        self.raw_df = pd.read_csv(file_path).reset_index(drop=True)
+
         self.attributes = self.raw_df.columns.tolist()
         self.mappings = {col: {'val_to_idx': {val: i for i, val in enumerate(sorted(self.raw_df[col].unique().astype(str)))},
                                'idx_to_val': {i: val for i, val in enumerate(sorted(self.raw_df[col].unique().astype(str)))},
@@ -83,11 +81,15 @@ def extract_correlated_sets(model, base_model, tau_c=0.75):
 
 
 def run_complete_pipeline(input_file, sets_output):
-    processor = IoTProcessor(input_file, sample_n=2000)
+    # 初始化处理器，直接全量加载
+    processor = IoTProcessor(input_file)
+    print(f"全量数据集加载完成，包含数据行数: {len(processor.raw_df)}，属性列数: {len(processor.attributes)}")
+
     dataset = IoTDataset(processor)
 
     # 刚性对齐手稿参数：batch_size = 128
-    dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
+    # 针对全量大型数据集优化：启用多进程加载 (num_workers=4) 与锁页内存 (pin_memory=True)
+    dataloader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=4, pin_memory=True)
 
     # 1. 显式检测单节点双 GPU 算力环境
     if torch.cuda.is_available():
@@ -123,13 +125,14 @@ def run_complete_pipeline(input_file, sets_output):
     best_loss = float('inf')
     patience_counter = 0
 
-    print(f"开始并行训练与多阶段规则提取 (主设备: {device})...")
+    print(f"开始全量数据集并行训练与多阶段规则提取 (主设备: {device})...")
 
     for epoch in range(total_epochs):
         model.train()
         total_loss = 0
         for batch in dataloader:
-            batch = {k: v.to(device) for k, v in batch.items()}
+            # 配合 pin_memory 使用 non_blocking=True 实现异步数据传输
+            batch = {k: v.to(device, non_blocking=True) for k, v in batch.items()}
 
             # 使用 base_model 的属性列表防止多显卡前向分裂报错
             mask_col = np.random.choice(base_model.attributes)
@@ -168,11 +171,11 @@ def run_complete_pipeline(input_file, sets_output):
             line = f"{{{', '.join(X)}}} -> {Y}"
             f.write(line + "\n")
 
-    print(f"\n任务完成！双卡高效框架总共捕获并去重了 {len(all_discovered_rules)} 个细化候选关联集。")
+    print(f"\n任务完成！双卡高效框架在全量数据集上总共捕获并去重了 {len(all_discovered_rules)} 个细化候选关联集。")
     print(f"平均每个候选属性在样本中拥有 {len(all_discovered_rules) / len(base_model.attributes):.2f} 个高阶关联组合。")
 
 
 if __name__ == "__main__":
     initial_file = '../../large_dataset/rt-iot2022/RT_IOT2022.csv'
-    sets_out = 'output/refined_rules_multi_epoch.txt'
+    sets_out = 'output/refined_rules_multi_epoch_full.txt'
     run_complete_pipeline(initial_file, sets_out)

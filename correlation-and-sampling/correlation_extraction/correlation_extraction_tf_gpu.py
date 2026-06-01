@@ -1,5 +1,5 @@
 """
-GPU版本的AttrFinder实现
+GPU版本的AttrFinder实现（全量数据集版本）
 """
 import pandas as pd
 import numpy as np
@@ -11,12 +11,9 @@ import os
 
 
 class IoTProcessor:
-    def __init__(self, file_path, sample_n=2000):
-        full_df = pd.read_csv(file_path)
-        if len(full_df) > sample_n:
-            self.raw_df = full_df.sample(n=sample_n, random_state=42).reset_index(drop=True)
-        else:
-            self.raw_df = full_df
+    def __init__(self, file_path):
+        # 彻底去除 sample_n 采样逻辑，直接全量读取原始 CSV 数据
+        self.raw_df = pd.read_csv(file_path).reset_index(drop=True)
 
         self.attributes = self.raw_df.columns.tolist()
         self.mappings = {}
@@ -85,12 +82,15 @@ class AttrFinder(nn.Module):
 
 
 def run_complete_pipeline(input_file, matrix_output, sets_output):
-    processor = IoTProcessor(input_file, sample_n=2000)
+    # 初始化处理器，直接传入输入文件，不进行任何行数限制或采样
+    processor = IoTProcessor(input_file)
+    print(f"全量数据集加载完成，包含行数: {len(processor.raw_df)}，属性数: {len(processor.attributes)}")
+
     M = processor.generate_and_save_M(matrix_output)
 
     dataset = IoTDataset(processor)
-    # 刚性对齐：Batch Size 128
-    dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
+    # 刚性对齐：Batch Size 128。针对全量大型数据集，开启 pin_memory=True 和 num_workers 加速数据载入
+    dataloader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=4, pin_memory=True)
 
     # 1. 检测双显卡硬件环境
     if torch.cuda.is_available():
@@ -122,14 +122,14 @@ def run_complete_pipeline(input_file, matrix_output, sets_output):
     best_loss = float('inf')
     patience_counter = 0
 
-    print("进入 Transformer 神经网络训练模块...")
+    print("进入全量数据集 Transformer 神经网络训练模块...")
     for epoch in range(max_epochs):
         model.train()
         total_loss = 0
         for batch in dataloader:
-            batch = {k: v.to(device) for k, v in batch.items()}
+            batch = {k: v.to(device, non_blocking=True) for k, v in batch.items()}
 
-            # 由于在 DataParallel 内部不能动态获取非模块张量，我们在外层做随机掩码列指定
+            # 在外层做随机掩码列指定
             attributes_list = base_model.attributes if isinstance(model, nn.DataParallel) else model.attributes
             mask_col = np.random.choice(attributes_list)
 
@@ -175,6 +175,6 @@ def run_complete_pipeline(input_file, matrix_output, sets_output):
 
 if __name__ == "__main__":
     initial_file = '../../large_dataset/rt-iot2022/RT_IOT2022.csv'
-    matrix_out = 'output/transaction_matrix_M_sampled.csv'
-    sets_out = 'output/correlated_attributes_sampled.txt'
+    matrix_out = 'output/transaction_matrix_M_full.csv'
+    sets_out = 'output/correlated_attributes_full.txt'
     run_complete_pipeline(initial_file, matrix_out, sets_out)
