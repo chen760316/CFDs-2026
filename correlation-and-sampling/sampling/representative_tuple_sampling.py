@@ -1,5 +1,5 @@
 """
-采样界为5824
+采样界为8400
 """
 import pandas as pd
 import numpy as np
@@ -13,7 +13,7 @@ class RepSamplerProcessor:
         # 仅读取表头获取属性名
         self.attributes = pd.read_csv(file_path, nrows=0).columns.tolist()
 
-    def run_repsampler(self, N_bound=5824, num_perm=128):
+    def run_repsampler(self, N_bound=8400, num_perm=128):
         """
         不再预采样 50000 行，而是流式扫描文件进行分桶
         """
@@ -80,7 +80,7 @@ class RepSamplerProcessor:
         return sampled_df
 
 if __name__ == "__main__":
-    input_csv = '../large_dataset/rt-iot2022/RT_IOT2022.csv'
+    input_csv = '../../large_dataset/crop.csv'
     output_csv = 'output/repsampler_final_output.csv'
     os.makedirs('output', exist_ok=True)
 
