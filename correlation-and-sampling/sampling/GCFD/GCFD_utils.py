@@ -20,24 +20,24 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 """
-将每行的单元格连接成一串字符串
+Concatenate cells of each row into a string
 """
 def concat_row(row):
     return ' '.join(map(str, row))
 """
-对数据进行降维(dataframe)
+Perform dimensionality reduction on the data (dataframe)
 """
 def gen_k_from_n_features_df(embedding, k):
-    # 对原始数据标准化处理
+    # Standardize original data
     X = (embedding - embedding.mean()) / embedding.std()
-    # 使用 sklearn 中的 PCA 类进行降维
+    # Use the PCA class from sklearn to perform dimensionality reduction
     pca = PCA(n_components=k)
     X_pca = pca.fit_transform(X)
-    # 将降维后的数据转换为 DataFrame
+    # Convert reduced data to DataFrame
     df_pca = pd.DataFrame(data=X_pca, columns=[f"PC{i + 1}" for i in range(k)])
     return df_pca
 """
-获取表实例的相关信息
+Get relevant information of the table instance
 """
 def table_column_information(file_path, len_limit):
     df = pd.read_csv(file_path)
@@ -49,16 +49,16 @@ def table_column_information(file_path, len_limit):
         max_cfd_length = column_count // 2
     unique_value_counts = df.nunique()
     sign_columns = [column for column in df.columns if 1 < unique_value_counts[column] <= 10]
-    print("数据集行数:", df.shape[0])
-    print("数据集列数:", df.shape[1])
-    print("sign_columns列表为：", sign_columns)
-    print("sign_columns列表长度为：", len(sign_columns))
+    print("Dataset rows:", df.shape[0])
+    print("Dataset columns:", df.shape[1])
+    print("sign_columns list:", sign_columns)
+    print("sign_columns list length:", len(sign_columns))
     print("*" * 185)
     return df, max_cfd_length, sign_columns
 
 """
-按照最小样本量和随机采样获得初始样本
-获得初始样本对应的行号
+Obtain initial samples according to minimum sample size and random sampling
+Obtain row numbers corresponding to initial samples
 """
 def get_k_means_center(pkl_path, initial_df, support, min_sampling, matrix_column_limit, cos_sim_threshold):
     with open(pkl_path, "rb") as fIn:
@@ -71,24 +71,24 @@ def get_k_means_center(pkl_path, initial_df, support, min_sampling, matrix_colum
     embedding_numpy = selected_embedding.cpu().numpy()
     embedding_numpy_pca = gen_k_from_n_features_df(embedding_numpy, matrix_column_limit)
     random_embedding_tensor_pca = torch.tensor(embedding_numpy_pca.values)
-    """快速聚类算法"""
-    print("快速聚类开始")
+    """Fast clustering algorithm"""
+    print("Fast clustering starts")
     clusters = util.community_detection(random_embedding_tensor_pca, min_community_size=support, threshold=cos_sim_threshold)
     while clusters == []:
         support = math.floor(support * 0.9)
         clusters = util.community_detection(random_embedding_tensor_pca, min_community_size=support, threshold=cos_sim_threshold)
-    print("快速聚类结束...")
+    print("Fast clustering ends...")
     initial_index_list = []
     k_means_center = []
     for i, cluster in enumerate(clusters):
         original_indices = random_sampled_df['original_index'].iloc[cluster].tolist()
-        # 保存密度聚类中每个聚类在原始df对应的索引信息
+        # Save index information of each cluster in density clustering corresponding to original df
         initial_index_list.append(original_indices)
-        # 在密度聚类每个簇中随机选取一个样本作为k-means聚类中心
+        # Randomly select a sample within each cluster of density clustering as k-means cluster center
         k_means_center.append(random.choice(original_indices))
     return k_means_center
 """
-使用k-means进行特征元组选取
+Use k-means for feature tuple selection
 """
 def get_rep_cluster(k_means_center, pkl_path):
     cluster_number = len(k_means_center)
@@ -101,19 +101,19 @@ def get_rep_cluster(k_means_center, pkl_path):
     embedding = embeddings.cpu().numpy()
     selected_samples = embedding[k_means_center]
     clustering_model = KMeans(n_clusters=cluster_number, init=selected_samples, n_init=1, algorithm='full')
-    print("K-means聚类开始...")
+    print("K-means clustering starts...")
     clustering_model.fit(embedding)
-    print("K-means聚类结束...")
+    print("K-means clustering ends...")
     cluster_assignment = clustering_model.labels_
     for sentence_id, cluster_id in enumerate(cluster_assignment):
-        # 保存k-means聚类的内容
+        # Save contents of k-means clustering
         clustered_sentences[cluster_id].append(kmeans_sentences[sentence_id])
-        # 保存k-means聚类的索引
+        # Save indices of k-means clustering
         clustered_sentences_id[cluster_id].append(sentence_id)
     return cluster_number, clustered_sentences_id
 
 """
-代表性采样
+Representative sampling
 """
 def rep_sampling(initial_df, clustered_sentences_id, cluster_number, min_sampling):
     samples = []
@@ -146,12 +146,12 @@ def rep_sampling(initial_df, clustered_sentences_id, cluster_number, min_samplin
     return samples, df
 
 """
-返回table的dataframe和其行数
-返回一个列表，列表中是将df的行按照空格连接的字符串
+Return table dataframe and its row count
+Return a list of strings where rows of df are concatenated with spaces
 """
 def get_inf_from_table(file_path):
     df = pd.read_csv(file_path)
     result_list = df.apply(concat_row, axis=1).tolist()
-    print("数据集行数:", df.shape[0])
-    print("数据集列数:", df.shape[1])
+    print("Dataset rows:", df.shape[0])
+    print("Dataset columns:", df.shape[1])
     return df, df.shape[0], result_list

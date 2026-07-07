@@ -14,8 +14,8 @@ import random
 import math
 from sklearn.cluster import KMeans
 
-pd.set_option('display.max_rows', 500) # 设置显示最大行
-pd.set_option('display.max_columns', 100) # 设置显示最大列
+pd.set_option('display.max_rows', 500) # Set max rows to display
+pd.set_option('display.max_columns', 100) # Set max columns to display
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
 top_k = 10
@@ -34,29 +34,18 @@ embedder = SentenceTransformer('E:\\sentence-transformers-master\\data\\pretrain
 initial_file = 'E:/sentence-transformers-master/large_dataset_plus/2015+Flight+Delays+and+Cancellations/flights_short.csv'
 
 """
-获取表实例的相关信息
+Get relevant information of the table instance
 """
 df, row_num, sentences = ut.get_inf_from_table(initial_file)
 """
-得到简单随机抽样的结果
+Get results of simple random sampling
 """
 sample_df = df.sample(n=sample_num)
 support = math.ceil(initial_support * sample_num / df.shape[0])
-print("子表的支持度阈值为：", support)
+print("The support threshold of the sub-table is:", support)
 """
-利用返回的结果重新生成csv文件
+Regenerate csv file using the returned results
 """
 file_name = "random.csv"
 sample_df.to_csv('random.csv', index=False)
 # ut.get_csv_from_result(df, file_name, result)
-
-
-
-
-
-
-
-
-
-
-

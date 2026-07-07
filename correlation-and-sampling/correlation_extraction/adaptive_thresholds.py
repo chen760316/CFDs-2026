@@ -7,16 +7,16 @@ from torch.utils.data import Dataset, DataLoader
 
 
 # ==========================================
-# 1. 全量数据预处理器与 Dataset 定义
+# 1. Full Data Preprocessor & Dataset Definition
 # ==========================================
 class IoTProcessor:
     def __init__(self, file_path):
         if not os.path.exists(file_path):
-            print(f"[环境兼容] 未检测到数据源，正在就地生成模拟全量关系表：{file_path}")
+            print(f"[Environment Compatibility] Data source not detected, generating mock full relation table on the fly: {file_path}")
             os.makedirs(os.path.dirname(file_path) if os.path.dirname(file_path) else '.', exist_ok=True)
             np.random.seed(42)
-            # 构造包含 12 个属性的类 IoT 强相关依赖数据集
-            total_rows = 5000  # 模拟生成全量行
+            # Construct a mock strongly correlated dependency dataset resembling IoT with 12 attributes
+            total_rows = 5000  # Simulate full rows generation
             mock_data = {
                 'Device_ID': np.random.choice(['DEV_01', 'DEV_02', 'DEV_03'], size=total_rows),
                 'Protocol': np.random.choice(['MQTT', 'HTTP', 'CoAP'], size=total_rows),
@@ -60,7 +60,7 @@ class IoTDataset(Dataset):
 
 
 # ==========================================
-# 2. 神经网络框架模型定义 (刚性对齐 128 维)
+# 2. Neural Network Framework Model Definition (Rigidly Aligned to 128 Dimensions)
 # ==========================================
 class AttrFinder(nn.Module):
     def __init__(self, mappings, d_model=128, nhead=4, num_layers=2):
@@ -83,20 +83,21 @@ class AttrFinder(nn.Module):
 
 
 # ==========================================
-# 3. 核心：归一化香农熵自适应审计引擎
+# 3. Core: Normalized Shannon Entropy Adaptive Audit Engine
 # ==========================================
 def extract_adaptive_correlated_sets(model, base_model, gamma_0=0.85, z=3):
     """
-    手稿 Section 7.3 & Appendix A.1 物理落地：
-    使用信息熵闭式解动态计算约束阈值 gamma，自适应解析最小属性数量 k_Y
+    Physical Grounding for Manuscript Section 7.3 & Appendix A.1:
+    Dynamically compute the constraint threshold gamma using the closed-form solution of information entropy,
+    adaptively parsing the minimal attribute count k_Y.
     """
     model.eval()
     discovered_partitions = []
     attributes = base_model.attributes
     m = len(attributes)
-    theta_att = z / m  # 显著性过滤准入门槛
+    theta_att = z / m  # Threshold for significance filtering
 
-    # 提取或模拟全局平均注意力矩阵 A_bar
+    # Extract or simulate global average attention matrix A_bar
     np.random.seed(1024)
     raw_attention = np.random.uniform(0.05, 1.0, size=(m, m))
     np.fill_diagonal(raw_attention, 0.0)
@@ -105,7 +106,7 @@ def extract_adaptive_correlated_sets(model, base_model, gamma_0=0.85, z=3):
 
     A_bar = raw_attention / raw_attention.sum(axis=1, keepdims=True)
 
-    # 计算每行属性向量的归一化香农信息熵 H
+    # Compute normalized Shannon information entropy H for each attribute row vector
     epsilon_0 = 1e-9
     entropy_list = []
     for i in range(m):
@@ -117,9 +118,9 @@ def extract_adaptive_correlated_sets(model, base_model, gamma_0=0.85, z=3):
     # \gamma = \max(\gamma_0, 1 - 1/m * \sum H)
     avg_entropy = np.mean(entropy_list)
     gamma = max(gamma_0, 1.0 - avg_entropy)
-    print(f"\n[信息论自适应审计] 全局平均归一化熵: {avg_entropy:.4f} -> 弹性 retention threshold 动态调定为 \\gamma = {gamma:.4f}")
+    print(f"\n[Information Theory Adaptive Audit] Global Average Normalized Entropy: {avg_entropy:.4f} -> Elastic retention threshold dynamically adjusted as \\gamma = {gamma:.4f}")
 
-    # 基于弹性累计保留率动态解析每个属性行的自适应上限 k_Y
+    # Dynamically parse the adaptive upper bound k_Y for each attribute row based on the elastic cumulative retention rate
     for y_idx, Y_name in enumerate(attributes):
         row_weights = A_bar[y_idx, :]
 
@@ -148,31 +149,31 @@ def extract_adaptive_correlated_sets(model, base_model, gamma_0=0.85, z=3):
 
 
 # ==========================================
-# 4. Main 启动入口
+# 4. Main Entry Point
 # ==========================================
 if __name__ == "__main__":
     mock_csv_path = 'data/mock_iot_data.csv'
     output_sets_path = 'output/adaptive_partitions.txt'
 
-    print("--- 启动模块一：全量关系表归一化香农熵自适应引擎验证 ---")
+    print("--- Launching Module One: Verification of Normalized Shannon Entropy Adaptive Engine on Full Relation Table ---")
     processor = IoTProcessor(mock_csv_path)
     dataset = IoTDataset(processor)
     dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
 
-    print(f"成功载入关系模式，已全量加载真实数据行数: {len(processor.raw_df)}，属性共 {len(processor.attributes)} 个。")
+    print(f"Successfully loaded relational schema, real dataset rows fully loaded: {len(processor.raw_df)}, total attributes: {len(processor.attributes)}.")
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     base_model = AttrFinder(processor.mappings, d_model=128).to(device)
 
-    print("触发多阶段自适应属性集全量提取...")
+    print("Triggering full extraction of multi-stage adaptive attribute sets...")
     partitions, computed_gamma = extract_adaptive_correlated_sets(base_model, base_model, gamma_0=0.85, z=3)
 
-    # 输出并保存
+    # Output and save results
     os.makedirs(os.path.dirname(output_sets_path), exist_ok=True)
     with open(output_sets_path, 'w', encoding='utf-8') as f:
         for X, Y in sorted(partitions, key=lambda x: x[1]):
-            line = f"{{{', '.join(X)}}} -> {Y}  (自适应子表宽度 k_Y = {len(X)})"
-            print(f"  捕获局部并行上下文: {line}")
+            line = f"{{{', '.join(X)}}} -> {Y}  (Adaptive sub-table width k_Y = {len(X)})"
+            print(f"  Captured local parallel context: {line}")
             f.write(line + "\n")
 
-    print(f"\n[任务成功] 模块一全量数据审计完毕，细化子表空间已存入: {output_sets_path}")
+    print(f"\n[Task Successful] Full data audit for module one completed, refined sub-table space saved into: {output_sets_path}")

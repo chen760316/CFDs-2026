@@ -1,5 +1,5 @@
 """
-基于 XGBoost 特征重要性的属性关联集提取引擎 (全量数据版本)
+Attribute Association Set Extraction Engine Based on XGBoost Feature Importance (Full Data Version)
 """
 import pandas as pd
 import numpy as np
@@ -10,31 +10,31 @@ from xgboost import XGBClassifier, XGBRegressor
 
 class IoTXGBoostProcessor:
     def __init__(self, file_path):
-        # 彻底去除元组采样的逻辑，直接加载全量数据
-        print(f"正在加载全量数据: {file_path} ...")
+        # Completely remove tuple sampling logic, load full dataset directly
+        print(f"Loading full dataset: {file_path} ...")
         self.raw_df = pd.read_csv(file_path)
 
-        # Windows/XGBoost 鲁棒性优化：清洗列名，防止非法符号（如点号、空格）导致模型无法对齐
+        # Windows/XGBoost robustness optimization: clean column names to prevent illegal symbols (e.g., dots, spaces) from alignment failure
         self.raw_df.columns = [col.strip().replace('.', '_').replace(' ', '_') for col in self.raw_df.columns]
         self.attributes = self.raw_df.columns.tolist()
 
-        print(f"全量数据加载完成，总计 {len(self.raw_df)} 行，{len(self.attributes)} 个属性。")
-        print("正在进行全量数据数字化编码与变量类型判定...")
+        print(f"Full dataset loading completed, totaling {len(self.raw_df)} rows, {len(self.attributes)} attributes.")
+        print("Performing digital encoding and variable type determination on full dataset...")
 
         self.encoded_df = self.raw_df.copy()
-        self.is_categorical = {}  # 记录每个属性是否为分类变量
-        self.model_type = {}      # 显式记录每个目标属性应当使用的模型类型
+        self.is_categorical = {}  # Records whether each attribute is a categorical variable
+        self.model_type = {}      # Explicitly records the model type to use for each target attribute
 
         for col in self.attributes:
             unique_count = self.raw_df[col].nunique()
 
-            # 1. 判定非数值类型（Object/String 等）
+            # 1. Determine non-numeric types (Object/String, etc.)
             if not np.issubdtype(self.raw_df[col].dtype, np.number):
                 self.encoded_df[col] = self.raw_df[col].astype('category').cat.codes
                 self.is_categorical[col] = True
-                # 安全兜底：如果类别数太大（>30），强行分类会引发 OOM 或多分类崩塌，采用回归平替提取重要性
+                # Safety fallback: if the number of categories is too large (>30), forcing classification causes OOM or multi-class crash, use regression instead to extract importance
                 self.model_type[col] = 'classifier' if unique_count <= 30 else 'regressor'
-            # 2. 判定数值类型
+            # 2. Determine numeric types
             else:
                 self.encoded_df[col] = self.encoded_df[col].fillna(self.encoded_df[col].mean())
                 if unique_count <= 10:
@@ -47,23 +47,23 @@ class IoTXGBoostProcessor:
 
 def extract_xgboost_correlated_sets(processor, tau_c=0.05, max_x_size=3):
     """
-    轮流将每个属性作为 Y，其余作为 X，训练 XGBoost 并根据 Feature Importance 提取关联集
+    Alternately treat each attribute as Y and the rest as X, train XGBoost, and extract association sets based on Feature Importance
     """
     discovered_rules = set()
     attributes = processor.attributes
     df = processor.encoded_df
 
-    print(f"\n开始基于全量数据训练并挖掘强相关属性集 (重要性阈值 tau_c={tau_c})...")
+    print(f"\nStarting training and mining strongly correlated attribute sets based on full dataset (Importance threshold tau_c={tau_c})...")
 
     for y_idx, Y_name in enumerate(attributes):
-        print(f"-> 正在拟合目标属性 [{y_idx + 1}/{len(attributes)}]: {Y_name} ...")
+        print(f"-> Fitting target attribute [{y_idx + 1}/{len(attributes)}]: {Y_name} ...")
 
-        # 1. 准备全量训练特征和目标
+        # 1. Prepare full training features and target
         X_cols = [col for col in attributes if col != Y_name]
         X_train = df[X_cols]
         y_train = df[Y_name]
 
-        # 2. 动态调度最安全的模型，防止全量多分类死锁
+        # 2. Dynamically schedule the safest model to prevent multi-class deadlocks on full data
         if processor.model_type[Y_name] == 'classifier':
             model = XGBClassifier(n_estimators=50, max_depth=4, learning_rate=0.1,
                                   random_state=42, eval_metric='logloss', n_jobs=-1)
@@ -71,23 +71,23 @@ def extract_xgboost_correlated_sets(processor, tau_c=0.05, max_x_size=3):
             model = XGBRegressor(n_estimators=50, max_depth=4, learning_rate=0.1,
                                  random_state=42, n_jobs=-1)
 
-        # 3. 拟合全量模型
+        # 3. Fit full data model
         model.fit(X_train, y_train)
 
-        # 4. 提取基于 Gain（增益）的特征重要性
+        # 4. Extract feature importance based on Gain
         importances = model.feature_importances_
 
-        # 过滤出贡献度超过阈值 tau_c 的强特征属性
+        # Filter out strong feature attributes whose contribution score is above threshold tau_c
         candidate_X = [X_cols[i] for i, score in enumerate(importances) if score >= tau_c]
 
-        # 5. 生成规则集
+        # 5. Generate rule set
         if candidate_X:
-            # 基础单特征关联
+            # Basic single-feature association
             for x in candidate_X:
                 rule = (tuple([x]), Y_name)
                 discovered_rules.add(rule)
 
-            # 多变量高阶交叉关联（限制大小以防止全量特征下产生组合爆炸）
+            # Multivariate high-order cross-association (limit size to prevent combinatorial explosion under full features)
             if len(candidate_X) > 1:
                 for r in range(2, min(len(candidate_X) + 1, max_x_size + 1)):
                     for subset in itertools.combinations(candidate_X, r):
@@ -98,17 +98,17 @@ def extract_xgboost_correlated_sets(processor, tau_c=0.05, max_x_size=3):
 
 
 def run_xgboost_pipeline(input_file, sets_output, tau_c=0.05):
-    # 1. 解析全量数据
+    # 1. Parse full data
     processor = IoTXGBoostProcessor(input_file)
 
-    # 2. 并行跑完所有属性在全量下的树模型
+    # 2. Parallelly run all attributes tree models under full dataset
     discovered_rules = extract_xgboost_correlated_sets(
         processor,
         tau_c=tau_c,
         max_x_size=3
     )
 
-    # --- 保存结果 ---
+    # --- Save results ---
     os.makedirs(os.path.dirname(sets_output), exist_ok=True)
     with open(sets_output, 'w', encoding='utf-8') as f:
         sorted_rules = sorted(discovered_rules, key=lambda x: x[1])
@@ -116,13 +116,13 @@ def run_xgboost_pipeline(input_file, sets_output, tau_c=0.05):
             line = f"{{{', '.join(X)}}} -> {Y}"
             f.write(line + "\n")
 
-    print(f"\n任务完成！全量运行下成功提取了 {len(discovered_rules)} 个高质量非线性相关属性集。")
-    print(f"平均每个属性拥有 {len(discovered_rules) / len(processor.attributes):.2f} 个候选关联集。")
+    print(f"\nTask completed! Successfully extracted {len(discovered_rules)} high-quality non-linearly correlated attribute sets under full execution.")
+    print(f"Average of {len(discovered_rules) / len(processor.attributes):.2f} candidate association sets per attribute.")
 
 
 if __name__ == "__main__":
     initial_file = '../../large_dataset/rt-iot2022/RT_IOT2022.csv'
     sets_out = 'output/refined_rules_xgboost_full.txt'
 
-    # 触发全量数据流水线
+    # Trigger full dataset pipeline
     run_xgboost_pipeline(initial_file, sets_out, tau_c=0.05)

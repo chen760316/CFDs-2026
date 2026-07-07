@@ -1,5 +1,5 @@
 """
-使用pandas的query方法进行加速
+Accelerate using the query method of pandas
 """
 import re
 import pandas as pd
@@ -16,7 +16,7 @@ output_path = 'output.csv'
 support_threshold = 5000
 confidence_threshold = 1.0
 
-"""检查属性之间是否满足一一对应关系"""
+"""Check whether there is a one-to-one correspondence between attributes"""
 def check_correspondence(row):
     left_attributes = row['left_attributes']
     right_attribute = row['right_attribute']
@@ -24,7 +24,7 @@ def check_correspondence(row):
     right_count = right_attribute.count(',') + 1
     return left_count == right_count
 
-"""找到LHS属性集中值不是_的元素的下标"""
+"""Find indices of elements in the LHS attribute set whose value is not _"""
 def find_non_underscore_values_with_indices(input_list):
     non_underscore_index = []
     for index, value in enumerate(input_list):
@@ -32,7 +32,7 @@ def find_non_underscore_values_with_indices(input_list):
             non_underscore_index.append((index))
     return non_underscore_index
 
-"""找到对应元素处是对应元素值的元组"""
+"""Find tuples where corresponding elements match corresponding attribute values"""
 def find_tuples_with_attributes(dataset, attribute_names, attribute_values):
     condition = " & ".join([f"`{attribute}` == '{value}'" for attribute, value in zip(attribute_names, attribute_values)])
     constant_index = dataset.query(condition).index.tolist()
@@ -40,7 +40,7 @@ def find_tuples_with_attributes(dataset, attribute_names, attribute_values):
     return constant_df, constant_index
 
 def string_to_lst(input_string):
-    # 使用逗号分隔字符串，并去除首尾空格
+    # Split string by commas and strip leading/trailing spaces
     items = input_string.split(',')
     items = [item.strip() for item in items]
     return items
@@ -82,7 +82,7 @@ for s in file1_set:
             violating_row_index = df.query(lhs_not_rhs_condition_str).index
             violate_index_set.update(violating_row_index.tolist())
             verified_count += 1
-            print("已经验证了{}个CFDs".format(verified_count))
+            print("Verified {} CFDs".format(verified_count))
         else:
             constant_index = find_non_underscore_values_with_indices(LHS_value_lst)
             constant_LHS_lst = [LHS_lst[i] for i in constant_index]
@@ -105,13 +105,13 @@ for s in file1_set:
             violations_index = merged_df[merged_df[RHS+'_original'] != merged_df[RHS+'_mode']].index.tolist()
             violate_index_set.update(violations_index)
             verified_count += 1
-            print("已经验证了{}个CFDs".format(verified_count))
-print("CFDs违反的总的元组数：", len(violate_index_set))
+            print("Verified {} CFDs".format(verified_count))
+print("Total number of violating tuples for CFDs: ", len(violate_index_set))
 selected_df = df.loc[violate_index_set]
 existing_data = pd.read_csv(output_path)
 updated_data = existing_data.append(selected_df)
 sample_df = updated_data.astype(original_dtypes)
-"""去除浮点数末尾的0"""
+"""Remove trailing zeros from floats"""
 # sample_df = sample_df.applymap(remove_trailing_zeros)
-"""将采样结果保存为csv文件"""
+"""Save the sampling result into a csv file"""
 # sample_df.to_csv(output_path, index=False)

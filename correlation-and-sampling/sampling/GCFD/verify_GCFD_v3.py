@@ -1,6 +1,6 @@
 """
-选择不同值中的第一个作为正确的依赖关系
-执行速度较慢,不好用
+Choose the first one among different values as the correct dependency relationship
+Execution speed is slow, not user-friendly
 """
 import re
 import pandas as pd
@@ -17,11 +17,11 @@ output_path = 'output.csv'
 support_threshold = 5000
 confidence_threshold = 1.0
 
-"""找到LHS属性集中值不是_的元素的下标"""
+"""Find indices of elements in the LHS attribute set whose value is not _"""
 def find_non_underscore_values_with_indices(input_list):
     return [index for index, value in enumerate(input_list) if value != "_"]
 
-"""根据左属性集中的常量属性和常量值找到他们对应的元组"""
+"""Find corresponding tuples based on constant attributes and constant values in the left attribute set"""
 def find_tuples_with_attributes(dataset, attribute_names, attribute_values):
     condition = dataset[attribute_names[0]].eq(attribute_values[0])
     for attribute, value in zip(attribute_names[1:], attribute_values[1:]):
@@ -62,32 +62,32 @@ for s in file1_set:
             violating_row_index = df.index[final_condition].tolist()
             violate_index_set.update(violating_row_index)
             verified_count += 1
-            print("已经验证了{}个CFDs".format(verified_count))
+            print("Verified {} CFDs".format(verified_count))
         else:
-            # 找到常量属性的索引和值
+            # Find indices and values of constant attributes
             constant_index = find_non_underscore_values_with_indices(LHS_value_lst)
             constant_LHS_lst = [LHS_lst[i] for i in constant_index]
             constant_LHS_value_lst = [LHS_value_lst[i] for i in constant_index]
-            # 找到变量属性的列表
+            # Find list of variable attributes
             variable_LHS_lst = [x for x in LHS_lst if x not in constant_LHS_lst]
-            # 构建常量属性的 DataFrame
+            # Construct DataFrame for constant attributes
             if constant_LHS_lst:
                 constant_df = find_tuples_with_attributes(df, constant_LHS_lst, constant_LHS_value_lst).copy()
             else:
                 constant_df = df
-            # 构建左属性集合，以便后续处理
+            # Construct left attribute set for subsequent processing
             constant_df['left_attr_set'] = constant_df[variable_LHS_lst[0]].astype(str)
             for attribute in variable_LHS_lst[1:]:
                 constant_df['left_attr_set'] += ' ' + constant_df[attribute].astype(str)
-            # 使用 groupby 和 mode 函数找到模式值
+            # Find mode values using groupby and mode functions
             result = constant_df.groupby('left_attr_set').apply(lambda x: x[x[RHS] != x[RHS].iloc[0]])
             violate_index_set.update(result.index.tolist())
             verified_count += 1
-            print("已经验证了{}个CFDs".format(verified_count))
-print("CFDs违反的总的元组数：", len(violate_index_set))
+            print("Verified {} CFDs".format(verified_count))
+print("Total number of violating tuples for CFDs: ", len(violate_index_set))
 selected_df = df.loc[violate_index_set]
 existing_data = pd.read_csv(output_path)
 updated_data = existing_data.append(selected_df)
 sample_df = updated_data.astype(original_dtypes)
-"""将采样结果保存为csv文件"""
+"""Save the sampling result into a csv file"""
 # sample_df.to_csv(output_path, index=False)

@@ -1,5 +1,5 @@
 """
-GPU版本的AttrFinder实现（全量数据集版本）
+GPU Version of AttrFinder Implementation (Full Dataset Version)
 """
 import pandas as pd
 import numpy as np
@@ -12,7 +12,7 @@ import os
 
 class IoTProcessor:
     def __init__(self, file_path):
-        # 彻底去除 sample_n 采样逻辑，直接全量读取原始 CSV 数据
+        # Completely remove sample_n sampling logic, load raw CSV data fully directly
         self.raw_df = pd.read_csv(file_path).reset_index(drop=True)
 
         self.attributes = self.raw_df.columns.tolist()
@@ -48,7 +48,7 @@ class IoTDataset(Dataset):
 
 
 class AttrFinder(nn.Module):
-    def __init__(self, mappings, d_model=128, nhead=4, num_layers=2): # 刚性对齐：维度 128
+    def __init__(self, mappings, d_model=128, nhead=4, num_layers=2): # Rigid alignment: dimension 128
         super().__init__()
         self.attributes = list(mappings.keys())
         self.embeddings = nn.ModuleDict()
@@ -82,54 +82,54 @@ class AttrFinder(nn.Module):
 
 
 def run_complete_pipeline(input_file, matrix_output, sets_output):
-    # 初始化处理器，直接传入输入文件，不进行任何行数限制或采样
+    # Initialize processor, pass the input file directly without any row limitations or sampling
     processor = IoTProcessor(input_file)
-    print(f"全量数据集加载完成，包含行数: {len(processor.raw_df)}，属性数: {len(processor.attributes)}")
+    print(f"Full dataset loading completed, containing rows: {len(processor.raw_df)}, attributes: {len(processor.attributes)}")
 
     M = processor.generate_and_save_M(matrix_output)
 
     dataset = IoTDataset(processor)
-    # 刚性对齐：Batch Size 128。针对全量大型数据集，开启 pin_memory=True 和 num_workers 加速数据载入
+    # Rigid alignment: Batch Size 128. Enable pin_memory=True and num_workers for accelerating data loading on large full datasets
     dataloader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=4, pin_memory=True)
 
-    # 1. 检测双显卡硬件环境
+    # 1. Detect dual GPU hardware environment
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
         available_gpus = torch.cuda.device_count()
-        print(f"检测到可用 GPU 数量: {available_gpus}。正在配置双卡数据并行环境...")
+        print(f"Detected available GPU count: {available_gpus}. Configuring dual-card data parallel environment...")
     else:
         device = torch.device("cpu")
-        print("未检测到 GPU，切换至 CPU 模式。")
+        print("GPU not detected, switching to CPU mode.")
 
     base_model = AttrFinder(processor.mappings, d_model=128)
     base_model = base_model.to(device)
 
-    # 2. 启用 Data-Parallel 模式 (无缝适配手稿中的双显卡架构)
+    # 2. Enable Data-Parallel mode (seamlessly adapted to the dual-card architecture in the manuscript)
     if torch.cuda.is_available() and torch.cuda.device_count() >= 2:
-        # 只取前两块显卡（对齐手稿中配置的 2 NVIDIA GPUs 32GB VRAM each）
+        # Use only the first two GPUs (aligned with the 2 NVIDIA GPUs 32GB VRAM each configured in the manuscript)
         model = nn.DataParallel(base_model, device_ids=[0, 1])
-        print("已成功激活单节点双卡数据并行训练 (Data-Parallel across 2 GPUs)！")
+        print("Successfully activated single-node dual-card data parallel training (Data-Parallel across 2 GPUs)!")
     else:
         model = base_model
 
-    # 3. 刚性对齐：AdamW 优化器 + 1e-3 学习率
+    # 3. Rigid alignment: AdamW optimizer + 1e-3 learning rate
     optimizer = optim.AdamW(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
 
-    # 4. 刚性对齐：最大 20 轮训练 + 3 轮早停机制 (Early Stopping with patience of 3)
+    # 4. Rigid alignment: maximum 20 epochs + Early Stopping with patience of 3
     max_epochs = 20
     patience = 3
     best_loss = float('inf')
     patience_counter = 0
 
-    print("进入全量数据集 Transformer 神经网络训练模块...")
+    print("Entering full dataset Transformer neural network training module...")
     for epoch in range(max_epochs):
         model.train()
         total_loss = 0
         for batch in dataloader:
             batch = {k: v.to(device, non_blocking=True) for k, v in batch.items()}
 
-            # 在外层做随机掩码列指定
+            # Assign randomly masked column in the outer layer
             attributes_list = base_model.attributes if isinstance(model, nn.DataParallel) else model.attributes
             mask_col = np.random.choice(attributes_list)
 
@@ -143,17 +143,17 @@ def run_complete_pipeline(input_file, matrix_output, sets_output):
         avg_epoch_loss = total_loss / len(dataloader)
         print(f"Epoch {epoch + 1}/{max_epochs}, Loss: {avg_epoch_loss:.4f}")
 
-        # 早停触发逻辑验证 (Early Stopping Validation)
+        # Early stopping trigger logic (Early Stopping Validation)
         if avg_epoch_loss < best_loss:
             best_loss = avg_epoch_loss
-            patience_counter = 0  # 重置计数器
+            patience_counter = 0  # Reset counter
         else:
             patience_counter += 1
             if patience_counter >= patience:
-                print(f"连续 {patience} 个 Epoch 损失未下降，触发早停机制以防止过拟合 (Prevent Overfitting)。训练在第 {epoch + 1} 轮提前终止。")
+                print(f"Loss has not decreased for {patience} consecutive epochs, triggering early stopping mechanism to prevent overfitting. Training prematurely terminated at epoch {epoch + 1}.")
                 break
 
-    # 后处理规则挖掘评估
+    # Post-processing rule mining evaluation
     model.eval()
     correlated_sets = []
     attributes_list = base_model.attributes if isinstance(model, nn.DataParallel) else model.attributes
@@ -170,7 +170,7 @@ def run_complete_pipeline(input_file, matrix_output, sets_output):
         for X, Y in correlated_sets:
             line = f"{{{', '.join(X)}}} -> {Y}"
             f.write(line + "\n")
-    print(f"规则提取完毕，结果已安全写入: {sets_output}")
+    print(f"Rule extraction completed, results securely written to: {sets_output}")
 
 
 if __name__ == "__main__":

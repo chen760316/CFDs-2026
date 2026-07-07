@@ -8,16 +8,16 @@ import os
 
 class IoTProcessor:
     def __init__(self, file_path):
-        # 1. 取消采样：直接全量读取
-        print(f"正在全量读取数据集: {file_path}")
+        # 1. Cancel sampling: read full data directly
+        print(f"Reading full dataset: {file_path}")
         self.raw_df = pd.read_csv(file_path)
 
         self.attributes = self.raw_df.columns.tolist()
         self.mappings = {}
 
-        print("正在构建属性映射 (Mappings)...")
+        print("Building attribute mappings (Mappings)...")
         for col in self.attributes:
-            # 转换为字符串并排序，建立索引映射
+            # Convert to string and sort, establish index mappings
             distinct_values = sorted(self.raw_df[col].unique().astype(str))
             self.mappings[col] = {
                 'val_to_idx': {val: i for i, val in enumerate(distinct_values)},
@@ -25,7 +25,7 @@ class IoTProcessor:
             }
 
     def generate_and_save_M(self, output_path):
-        print("正在生成全量独热矩阵 M (这可能需要较多内存)...")
+        print("Generating full one-hot matrix M (this may require significant memory)...")
         M = pd.get_dummies(self.raw_df, columns=self.attributes, dtype=int)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         M.to_csv(output_path, index=False)
@@ -33,12 +33,12 @@ class IoTProcessor:
 
 class IoTDataset(Dataset):
     def __init__(self, processor):
-        print("正在将数据集转换为数值索引格式...")
+        print("Converting dataset to numerical index format...")
         self.df = processor.raw_df.copy()
         self.attributes = processor.attributes
         self.mappings = processor.mappings
 
-        # 使用快速映射处理全量数据
+        # Use fast mapping to process full data
         for col in self.attributes:
             mapping_dict = self.mappings[col]['val_to_idx']
             self.df[col] = self.df[col].astype(str).map(mapping_dict)
@@ -47,7 +47,7 @@ class IoTDataset(Dataset):
         return len(self.df)
 
     def __getitem__(self, idx):
-        # 将整行转换为张量字典
+        # Convert entire row to tensor dictionary
         return {col: torch.tensor(self.df.iloc[idx][col], dtype=torch.long) for col in self.attributes}
 
 class AttrFinder(nn.Module):
@@ -62,7 +62,7 @@ class AttrFinder(nn.Module):
             self.embeddings[safe_name] = nn.Embedding(mappings[col]['cardinality'], d_model)
             self.reconstructors[safe_name] = nn.Linear(d_model, mappings[col]['cardinality'])
 
-        # batch_first=True 可以提升计算效率并简化维度转换
+        # batch_first=True can improve computational efficiency and simplify dimension conversion
         encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True)
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
@@ -71,12 +71,12 @@ class AttrFinder(nn.Module):
         for col in self.attributes:
             safe_name = col.replace('.', '_')
             e_i = self.embeddings[safe_name](x_dict[col])
-            # 逻辑掩码：模拟 CFD 发现中的变量探测
+            # Logical masking: simulate variable probing in CFD discovery
             if col == mask_col:
                 e_i = torch.zeros_like(e_i)
             embeds.append(e_i.unsqueeze(1))
 
-        # 拼接属性嵌入: [batch, num_attr, d_model]
+        # Concatenate attribute embeddings: [batch, num_attr, d_model]
         h_in = torch.cat(embeds, dim=1)
         h_out = self.transformer(h_in)
 
@@ -87,27 +87,27 @@ class AttrFinder(nn.Module):
         return logits
 
 def run_complete_pipeline(input_file, matrix_output, sets_output):
-    # 1. 处理器初始化（不采样）
+    # 1. Processor initialization (no sampling)
     processor = IoTProcessor(input_file)
 
-    # 2. 保存全量矩阵
+    # 2. Save full matrix
     M = processor.generate_and_save_M(matrix_output)
 
-    # 3. 数据加载
+    # 3. Data loading
     dataset = IoTDataset(processor)
-    # 针对全量数据（12万行）和高性能 GPU，建议调大 batch_size
+    # For full data (120k rows) and high-performance GPUs, it is recommended to increase batch_size
     dataloader = DataLoader(dataset, batch_size=512, shuffle=True, num_workers=4)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"训练开始，使用设备: {device}")
+    print(f"Training started, using device: {device}")
 
     model = AttrFinder(processor.mappings).to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
 
-    # 4. 训练循环
+    # 4. Training loop
     model.train()
-    num_epochs = 5 # 全量数据下，通常 5 轮即有较好效果
+    num_epochs = 5 # Under full data, 5 epochs usually yield good results
     for epoch in range(num_epochs):
         total_loss = 0
         for batch in dataloader:
@@ -123,27 +123,27 @@ def run_complete_pipeline(input_file, matrix_output, sets_output):
 
         print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {total_loss / len(dataloader):.4f}")
 
-    # 5. 相关属性集合提取
-    print("正在评估并解析属性相关性...")
+    # 5. Correlated attributes set extraction
+    print("Evaluating and parsing attribute correlations...")
     model.eval()
     correlated_sets = []
     m = len(model.attributes)
 
     for y_idx, Y_name in enumerate(model.attributes):
-        # 此处保留了你的 Dirichlet 分数逻辑用于生成候选集
-        # 在全量数据下，这代表了模型学习到的全局依赖分布
+        # Your Dirichlet score logic is retained here for generating candidate sets
+        # Under full data, this represents the global dependency distribution learned by the model
         scores = np.random.dirichlet(np.ones(m), size=1)[0]
         X_set = [model.attributes[i] for i, s in enumerate(scores) if s > (3.0 / m) and i != y_idx]
         if X_set:
             correlated_sets.append((X_set, Y_name))
 
-    # 6. 保存结果
+    # 6. Save results
     os.makedirs(os.path.dirname(sets_output), exist_ok=True)
     with open(sets_output, 'w', encoding='utf-8') as f:
         for X, Y in correlated_sets:
             line = f"{{{', '.join(X)}}} -> {Y}"
             f.write(line + "\n")
-    print(f"处理完成。结果保存至: {sets_output}")
+    print(f"Processing completed. Results saved to: {sets_output}")
 
 if __name__ == "__main__":
     initial_file = '../large_dataset/rt-iot2022/RT_IOT2022.csv'

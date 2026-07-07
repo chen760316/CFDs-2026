@@ -1,5 +1,5 @@
 """
-chatGPT进行代码优化
+Code optimization using chatGPT
 """
 import re
 import time
@@ -16,12 +16,12 @@ file_path = 'file1.txt'
 initial_file = '../../datasets_for_GCFDs/adult_long.csv'
 output_path = 'output.csv'
 
-"""版本1：原始未进行优化的代码"""
-# """找到LHS属性集中值不是_的元素的下标"""
+"""Version 1: Original unoptimized code"""
+# """Find indices of elements in the LHS attribute set whose value is not _"""
 # def find_non_underscore_values_with_indices(input_list):
 #     return [index for index, value in enumerate(input_list) if value != "_"]
 #
-# """根据左属性集中的常量属性和常量值找到他们对应的元组"""
+# """Find corresponding tuples based on constant attributes and constant values in the left attribute set"""
 # def find_tuples_with_attributes(dataset, attribute_names, attribute_values):
 #     condition = dataset[attribute_names[0]].eq(attribute_values[0])
 #     for attribute, value in zip(attribute_names[1:], attribute_values[1:]):
@@ -29,7 +29,7 @@ output_path = 'output.csv'
 #     constant_df = dataset.loc[condition]
 #     return constant_df
 #
-# """找到df中违反函数依赖X->Y的元组"""
+# """Find tuples in df that violate the functional dependency X->Y"""
 # def detect_fd_violations(df, X, Y):
 #     violations = []
 #     grouped = df.groupby(X)[Y]
@@ -70,57 +70,57 @@ output_path = 'output.csv'
 #             violating_row_index = df.index[final_condition].tolist()
 #             violate_index_set.update(violating_row_index)
 #             verified_count += 1
-#             print("已经验证了{}个CFDs".format(verified_count))
+#             print("Verified {} CFDs".format(verified_count))
 #         else:
-#             # 找到常量属性的索引和值
+#             # Find indices and values of constant attributes
 #             constant_index = find_non_underscore_values_with_indices(LHS_value_lst)
 #             constant_LHS_lst = [LHS_lst[i] for i in constant_index]
 #             constant_LHS_value_lst = [LHS_value_lst[i] for i in constant_index]
-#             # 找到变量属性的列表
+#             # Find list of variable attributes
 #             variable_LHS_lst = [x for x in LHS_lst if x not in constant_LHS_lst]
-#             # 构建常量属性的 DataFrame
+#             # Construct DataFrame for constant attributes
 #             if constant_LHS_lst:
 #                 constant_df = find_tuples_with_attributes(df, constant_LHS_lst, constant_LHS_value_lst).copy()
 #             else:
 #                 constant_df = df.copy()
-#             # 构建左属性集合，以便后续处理
+#             # Construct left attribute set for subsequent processing
 #             constant_df['left_attr_set'] = constant_df[variable_LHS_lst[0]].astype(str)
 #             for attribute in variable_LHS_lst[1:]:
 #                 constant_df['left_attr_set'] += ' ' + constant_df[attribute].astype(str)
 #             violations = detect_fd_violations(constant_df, ['left_attr_set'], RHS).index.tolist()
-#             # 更新违反索引集合
+#             # Update violating index set
 #             violate_index_set.update(violations)
 #             verified_count += 1
-#             print("已经验证了{}个CFDs".format(verified_count))
-# print("CFDs违反的总的元组数：", len(violate_index_set))
+#             print("Verified {} CFDs".format(verified_count))
+# print("Total number of violating tuples for CFDs: ", len(violate_index_set))
 # selected_df = df.loc[violate_index_set]
 # existing_data = pd.read_csv(output_path)
 # updated_data = existing_data.append(selected_df)
 # # sample_df = updated_data.astype(original_dtypes)
-# """将采样结果保存为csv文件"""
+# """Save the sampling result into a csv file"""
 # updated_data.to_csv(output_path, index=False)
 
 
-"""版本2：经过优化后的代码"""
+"""Version 2: Optimized code"""
 def find_non_underscore_values_with_indices(input_list):
     return [index for index, value in enumerate(input_list) if value != "_"]
 
-"""从初始的df中截取出常量模式对应的df"""
+"""Extract the df corresponding to the constant pattern from the initial df"""
 def find_tuples_with_attributes(dataset, attribute_names, attribute_values):
     condition = dataset[attribute_names[0]].eq(attribute_values[0])
     for attribute, value in zip(attribute_names[1:], attribute_values[1:]):
         condition &= dataset[attribute].eq(value)
     return dataset.loc[condition]
 
-"""检测出违反函数依赖的元组"""
-"""版本1：将众数作为正确值，其余作为违反函数依赖的值"""
+"""Detect tuples that violate functional dependencies"""
+"""Version 1: Use mode as correct value, others as values violating functional dependencies"""
 # def detect_fd_violations(df, X, Y):
 #     violations = []
 #     grouped = df.groupby(X)[Y]
 #     mode_values = grouped.transform(lambda x: x.mode().iat[0])
 #     violations = df[df[Y] != mode_values]
 #     return violations.index.tolist()
-"""版本2：将所有RHS出现不同值的元组统计"""
+"""Version 2: Collect all tuples where different values appear in RHS"""
 # def detect_fd_violations(df, X, Y):
 #     violations = []
 #     grouped = df.groupby(X)
@@ -129,21 +129,21 @@ def find_tuples_with_attributes(dataset, attribute_names, attribute_values):
 #         if len(unique_Y_values) > 1:
 #             violations.extend(group_data.index.tolist())
 #     return violations
-"""使用set，更高效将所有RHS出现不同值的元组统计（速度较快）"""
+"""Use set to collect all tuples where different values appear in RHS more efficiently (faster)"""
 # def detect_fd_violations(df, X, Y):
 #     violations = set()
 #     group_start_time = time.time()
 #     grouped = df.groupby(X)
 #     group_end_time = time.time()
-#     print("分组耗时：", group_end_time-group_start_time)
+#     print("Grouping elapsed time: ", group_end_time-group_start_time)
 #     verify_group_start_time = time.time()
 #     for group_name, group_data in grouped:
 #         if len(set(group_data[Y])) > 1:
 #             violations.update(group_data.index)
 #     verify_group_end_time = time.time()
-#     print("验证分组中违反CFDs耗时：", verify_group_end_time - verify_group_start_time)
+#     print("Time elapsed for verifying violations of CFDs in groups: ", verify_group_end_time - verify_group_start_time)
 #     return list(violations)
-"""使用向量化方法代替集合遍历（速度较快）"""
+"""Use vectorized method instead of set iteration (faster)"""
 def detect_fd_violations(df, X, Y):
     def has_multiple_unique_values(group):
         return len(set(group[Y])) > 1
@@ -154,14 +154,14 @@ def detect_fd_violations(df, X, Y):
     return list(violations)
 
 
-# 读取文件
+# Read files
 with open(file_path, 'rb') as file:
     file1_data = file.readlines()
 
-# 读取数据并转换成DataFrame
+# Read data and convert to DataFrame
 df = pd.read_csv(initial_file, dtype=str)
 
-# 将文件内容转换为字符串列表
+# Convert file content to list of strings
 file1_data = [line.decode('utf-8', 'ignore').strip() for line in file1_data]
 file1_set = set(file1_data)
 
@@ -169,7 +169,7 @@ pattern = r'\((.*?)\) => (.*)'
 violate_index_set = set()
 verified_count = 0
 
-# 处理每个CFD
+# Process each CFD
 for s in file1_set:
     match = re.search(pattern, s)
     if match:
@@ -187,7 +187,7 @@ for s in file1_set:
             violating_row_index = df.index[final_condition].tolist()
             violate_index_set.update(violating_row_index)
             verified_count += 1
-            print("已经验证了{}个CFDs".format(verified_count))
+            print("Verified {} CFDs".format(verified_count))
         else:
             constant_start_time = time.time()
             constant_index = find_non_underscore_values_with_indices(LHS_value_lst)
@@ -196,7 +196,7 @@ for s in file1_set:
             variable_LHS_lst = [x for x in LHS_lst if x not in constant_LHS_lst]
             constant_end_time = time.time()
             print("*"*50)
-            print("区分常量和变量属性耗时：", constant_end_time-constant_start_time)
+            print("Time elapsed for separating constant and variable attributes: ", constant_end_time-constant_start_time)
 
             constant_df_start_time = time.time()
             if constant_LHS_lst:
@@ -204,28 +204,28 @@ for s in file1_set:
             else:
                 constant_df = df.copy()
             constant_df_end_time = time.time()
-            print("按照常量值构造df耗时：", constant_df_end_time - constant_df_start_time)
+            print("Time elapsed for constructing df based on constant values: ", constant_df_end_time - constant_df_start_time)
 
             concat_start_time = time.time()
             constant_df['left_attr_set'] = constant_df[variable_LHS_lst[0]].astype(str)
             for attribute in variable_LHS_lst[1:]:
                 constant_df['left_attr_set'] += ' ' + constant_df[attribute].astype(str)
             concat_end_time = time.time()
-            print("拼接左侧属性集字符串耗时：", concat_end_time-concat_start_time)
+            print("Time elapsed for concatenating LHS attribute set strings: ", concat_end_time-concat_start_time)
 
             violation_start_time = time.time()
             violations = detect_fd_violations(constant_df, ['left_attr_set'], RHS)
             violation_end_time = time.time()
-            print("查找df中违反CFDs的元组耗时：", violation_end_time-violation_start_time)
+            print("Time elapsed for finding tuples that violate CFDs in df: ", violation_end_time-violation_start_time)
             print(violations)
             print("*" * 50)
             violate_index_set.update(violations)
             verified_count += 1
-            print("已经验证了{}个CFDs".format(verified_count))
+            print("Verified {} CFDs".format(verified_count))
 
-print("CFDs违反的总的元组数：", len(violate_index_set))
+print("Total number of violating tuples for CFDs: ", len(violate_index_set))
 
-# 将违反函数依赖的元组加入结果集并保存到文件
+# Add tuples that violate functional dependencies to the result set and save to file
 # selected_df = df.loc[violate_index_set]
 # existing_data = pd.read_csv(output_path)
 # updated_data = existing_data.append(selected_df)

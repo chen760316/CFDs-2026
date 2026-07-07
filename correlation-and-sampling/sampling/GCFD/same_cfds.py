@@ -1,37 +1,37 @@
 import re
 
 def string_to_lst(input_string):
-    # 使用逗号分隔字符串，并去除首尾空格
+    # Split the string by commas and strip leading/trailing spaces
     items = input_string.split(',')
     items = [item.strip() for item in items]
     return items
 
-# 读取第一个txt文件的数据
+# Read data from the first txt file
 with open('file1.txt', 'rb') as file:
     file1_data = file.readlines()
 
-# 读取第二个txt文件的数据
+# Read data from the second txt file
 with open('file2.txt', 'rb') as file:
     file2_data = file.readlines()
 
-# 解码文件数据
+# Decode file data
 file1_data = [line.decode('utf-8', 'ignore') for line in file1_data]
 file2_data = [line.decode('utf-8', 'ignore') for line in file2_data]
 
-# 将文件数据转换为集合，以便进行交集运算
+# Convert file data to sets for intersection operations
 file1_set = set(file1_data)
 file2_set = set(file2_data)
 
-# 计算两个文件数据的交集
+# Compute the intersection of the two file data sets
 intersection = file1_set.intersection(file2_set)
 intersection_same_count = len(intersection)
-# 输出重复数据的数量
-print(f"文件1中CFDs的数量为: {len(file1_set)}")
-print(f"文件2中CFDs的数量为: {len(file2_set)}")
+# Output the count of duplicate data
+print(f"The number of CFDs in file1 is: {len(file1_set)}")
+print(f"The number of CFDs in file2 is: {len(file2_set)}")
 file1_remain = file1_set - intersection
 file2_remain = file2_set - intersection
 """
-截取file1和file2中[和]中间的内容
+Extract content between [ and ] in file1 and file2
 """
 pattern = r'\((.*?)\) => (.*)'
 cfd_count = 0
@@ -83,7 +83,7 @@ for s in file2_remain:
                     break
         if found:
             break
-print("file1和file2中相同的CFDs数量为", intersection_same_count + same_cfd_count_in_remain)
+print("The number of identical CFDs in file1 and file2 is", intersection_same_count + same_cfd_count_in_remain)
 
 
 
@@ -168,15 +168,6 @@ print("file1和file2中相同的CFDs数量为", intersection_same_count + same_c
 #                 elif set(LHS_list[index]).issubset(set(LHS)):
 #                     label = 1
 #     embedded_general_fd += label
-# print("file1和file2中相同的CFDs数量为", cfd_count + len(intersection) - general_cfd_num)
-# print("file1和file2中相同的CFDs+嵌入FDs相同但值不同的CFDs数量为", cfd_count + len(intersection) - general_cfd_num + embedded_fd)
-# print("file1和file2中相同的CFDs+嵌入FDs相同但值不同的CFDs+嵌入FDs为子集且子集值相同的CFDs数量为", len(intersection) + cfd_count + embedded_fd)
-
-
-
-
-
-
-
-
-
+# print("The number of identical CFDs in file1 and file2 is", cfd_count + len(intersection) - general_cfd_num)
+# print("The number of identical CFDs + embedded FDs identical but with different values in file1 and file2 is", cfd_count + len(intersection) - general_cfd_num + embedded_fd)
+# print("The number of identical CFDs + embedded FDs identical but with different values + embedded FDs as subset with identical subset values in file1 and file2 is", len(intersection) + cfd_count + embedded_fd)
