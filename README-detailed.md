@@ -17,10 +17,7 @@
 - [11. Evaluation Framework](#11-evaluation-framework)
 - [12. Ablation Studies](#12-ablation-studies)
 - [13. End-to-End Pipeline Orchestration](#13-end-to-end-pipeline-orchestration)
-- [14. Experiment Reproduction Guide](#14-experiment-reproduction-guide)
-- [15. Datasets](#15-datasets)
-- [16. Algorithm Reference](#16-algorithm-reference)
-- [17. Citation](#17-citation)
+- [14. Datasets](#14-datasets)
 
 ---
 
@@ -37,14 +34,14 @@ The framework supports discovery of both **constant CFDs** (e.g., `(A=a, B=b) =>
 
 ### Key Contributions
 
-| Component | Technique | Paper Section |
-|---|---|---|
-| AttrFinder | Transformer encoder with masked-attribute reconstruction | §6 |
-| RepSampler | MinHash-LSH diversity-first sampling with Theorem 2 bounds | §7 |
-| Sub-table generation | Vertical partitioning guided by correlation sets Ψ | §8 |
-| SCFDM (C++) | MPI + OpenMP parallel CFD discovery with 10 search strategies | §8 |
-| Adaptive thresholds | Normalized Shannon entropy + negative-feedback hyperparameter tuning | §7.3, Appendix B |
-| Sampling bounds | Variance-augmented Hoeffding-Bennstein piecewise bound | §7.1 |
+| Component            | Technique                                                    | Paper Section    |
+| -------------------- | ------------------------------------------------------------ | ---------------- |
+| AttrFinder           | Transformer encoder with masked-attribute reconstruction     | §6               |
+| RepSampler           | MinHash-LSH diversity-first sampling with Theorem 2 bounds   | §7               |
+| Sub-table generation | Vertical partitioning guided by correlation sets Ψ           | §8               |
+| SCFDM (C++)          | MPI + OpenMP parallel CFD discovery with 10 search strategies | §8               |
+| Adaptive thresholds  | Normalized Shannon entropy + negative-feedback hyperparameter tuning | §7.3, Appendix B |
+| Sampling bounds      | Variance-augmented Hoeffding-Bennstein piecewise bound       | §7.1             |
 
 ---
 
@@ -126,15 +123,6 @@ code-for-paper/
 │   │   ├── lhs_rhs.py                         # LHS/RHS pattern extraction
 │   │   ├── same_cfds.py                       # CFD deduplication
 │   │   └── GCFD/                              # GCFD-specific sampling outputs
-│   │
-│   ├── sentence_transformers/         #   Embedded SentenceTransformer library
-│   │   ├── SentenceTransformer.py             # Core model wrapper
-│   │   ├── cross_encoder/                     # Cross-encoder modules
-│   │   ├── models/                            # Model definitions
-│   │   ├── losses/                            # Training loss functions
-│   │   ├── readers/                           # Data readers
-│   │   ├── evaluation/                        # STB evaluation tools
-│   │   └── util.py                            # Utility functions
 │   │
 │   ├── supplemental/                  #   Supplementary theory & experiments
 │   │   ├── sampling_bound/
@@ -235,24 +223,25 @@ pip install -r requirements.txt
 
 **Key dependencies:**
 
-| Package | Version | Purpose |
-|---|---|---|
-| `torch` | 1.7.0 | Transformer model (AttrFinder) |
-| `tensorflow` | 2.11.0 | Optional GPU acceleration |
-| `sentence-transformers` | 2.2.2 | Column embedding (all-MiniLM-L6-v2) |
-| `transformers` | 4.30.2 | HuggingFace model support |
-| `scikit-learn` | 1.0.2 | PCA, clustering, metrics |
-| `pandas` | 1.1.5 | Data manipulation |
-| `numpy` | — | Numerical computation |
-| `scipy` | 1.7.3 | Statistical functions |
-| `datasketch` | — | MinHash-LSH for RepSampler |
-| `xgboost` | — | Ablation baseline |
-| `faiss-cpu` | 1.7.4 | Fast nearest-neighbor search |
-| `ray` | 2.6.1 | Distributed computing (optional) |
+| Package                 | Version | Purpose                             |
+| ----------------------- | ------- | ----------------------------------- |
+| `torch`                 | 1.7.0   | Transformer model (AttrFinder)      |
+| `tensorflow`            | 2.11.0  | Optional GPU acceleration           |
+| `sentence-transformers` | 2.2.2   | Column embedding (all-MiniLM-L6-v2) |
+| `transformers`          | 4.30.2  | HuggingFace model support           |
+| `scikit-learn`          | 1.0.2   | PCA, clustering, metrics            |
+| `pandas`                | 1.1.5   | Data manipulation                   |
+| `numpy`                 | —       | Numerical computation               |
+| `scipy`                 | 1.7.3   | Statistical functions               |
+| `datasketch`            | —       | MinHash-LSH for RepSampler          |
+| `xgboost`               | —       | Ablation baseline                   |
+| `faiss-cpu`             | 1.7.4   | Fast nearest-neighbor search        |
+| `ray`                   | 2.6.1   | Distributed computing (optional)    |
 
 ### 4.2 C++ Environment (parallel/)
 
 **Build tools:**
+
 - CMake ≥ 2.6
 - C++ compiler supporting C++11 (`-std=c++0x`)
 - Boost ≥ 1.40 (`program_options`)
@@ -276,12 +265,12 @@ make
 
 ### 4.3 Hardware Recommendations
 
-| Component | Minimum | Recommended |
-|---|---|---|
-| CPU | 8 cores | 28–112 cores (MPI cluster) |
-| RAM | 64 GB | 128 GB+ (for large datasets) |
-| GPU | Optional | NVIDIA GPU with ≥ 32 GB VRAM |
-| Storage | 50 GB | 100 GB+ (for large datasets & embeddings) |
+| Component | Minimum  | Recommended                               |
+| --------- | -------- | ----------------------------------------- |
+| CPU       | 8 cores  | 28–112 cores (MPI cluster)                |
+| RAM       | 64 GB    | 128 GB+ (for large datasets)              |
+| GPU       | Optional | NVIDIA GPU with ≥ 32 GB VRAM              |
+| Storage   | 50 GB    | 100 GB+ (for large datasets & embeddings) |
 
 ---
 
@@ -307,6 +296,7 @@ AttrFinder (nn.Module)
 ```
 
 **Forward pass:**
+
 1. Each attribute value is embedded into a `d_model`-dimensional vector.
 2. The target attribute's embedding is zeroed out (masked probing).
 3. The Transformer encoder processes the concatenated embedding sequence.
@@ -314,14 +304,14 @@ AttrFinder (nn.Module)
 
 ### 5.3 Variants
 
-| File | Description | Use Case |
-|---|---|---|
-| `correlation_extraction.py` | Sentence-Transformer + PCA + Lasso + Hierarchical clustering | Small/medium datasets, multi-method fusion |
-| `correlation_extraction_tf.py` | Single-GPU Transformer (d_model=32) | Quick prototyping |
-| `correlation_extraction_tf_multi.py` | Multi-epoch Transformer (d_model=64, 12 epochs) | Production, rule refinement |
-| `correlation_extraction_tf_gpu.py` | GPU-optimized single-GPU | Large datasets |
-| `correlation_extraction_tf_multi_gpu.py` | Multi-GPU multi-epoch | Very large datasets (RT-IoT2022) |
-| `correlation_extraction_GCFD.py` | GCFD-specific variant | Generalized CFD discovery |
+| File                                     | Description                                                  | Use Case                                   |
+| ---------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+| `correlation_extraction.py`              | Sentence-Transformer + PCA + Lasso + Hierarchical clustering | Small/medium datasets, multi-method fusion |
+| `correlation_extraction_tf.py`           | Single-GPU Transformer (d_model=32)                          | Quick prototyping                          |
+| `correlation_extraction_tf_multi.py`     | Multi-epoch Transformer (d_model=64, 12 epochs)              | Production, rule refinement                |
+| `correlation_extraction_tf_gpu.py`       | GPU-optimized single-GPU                                     | Large datasets                             |
+| `correlation_extraction_tf_multi_gpu.py` | Multi-GPU multi-epoch                                        | Very large datasets (RT-IoT2022)           |
+| `correlation_extraction_GCFD.py`         | GCFD-specific variant                                        | Generalized CFD discovery                  |
 
 ### 5.4 Usage
 
@@ -381,15 +371,15 @@ sampled_df.to_csv('output/sampled.csv', index=False)
 
 ### 6.3 Sampling Variants
 
-| File | Method | Description |
-|---|---|---|
-| `representative_tuple_sampling.py` | MinHash-LSH | Main RepSampler implementation |
-| `k_means_with_dbscan.py` | K-Means + DBSCAN | Cluster-based representative sampling |
-| `k_means_with_dbscan_v2.py` | K-Means + DBSCAN v2 | Optimized version |
-| `dbscan_sample.py` | DBSCAN only | Density-based sampling |
-| `fast_dbscan_sampling.py` | Fast DBSCAN | Accelerated DBSCAN sampling |
-| `k_means_sample.py` | K-Means only | Centroid-based sampling |
-| `rep_with_kmeans.py` | RepSampler + K-Means | Hybrid approach |
+| File                               | Method               | Description                           |
+| ---------------------------------- | -------------------- | ------------------------------------- |
+| `representative_tuple_sampling.py` | MinHash-LSH          | Main RepSampler implementation        |
+| `k_means_with_dbscan.py`           | K-Means + DBSCAN     | Cluster-based representative sampling |
+| `k_means_with_dbscan_v2.py`        | K-Means + DBSCAN v2  | Optimized version                     |
+| `dbscan_sample.py`                 | DBSCAN only          | Density-based sampling                |
+| `fast_dbscan_sampling.py`          | Fast DBSCAN          | Accelerated DBSCAN sampling           |
+| `k_means_sample.py`                | K-Means only         | Centroid-based sampling               |
+| `rep_with_kmeans.py`               | RepSampler + K-Means | Hybrid approach                       |
 
 ---
 
@@ -424,20 +414,21 @@ The `generate_sub_tables.py` script reads the correlation sets and the sampled d
 
 Supports **10 search strategies**, selectable via `input.txt`:
 
-| Strategy | Description |
-|---|---|
-| `Integrated-BFS` | CTane algorithm (BFS level-wise) |
-| `Integrated-DFS` | Integrated DFS with free itemset pruning |
-| `Itemset-First-BFS-bfs` | Itemset-first BFS, pattern BFS sub-strategy |
-| `Itemset-First-BFS-dfs` | Itemset-first BFS, pattern DFS sub-strategy |
-| `Itemset-First-DFS-bfs` | Itemset-first DFS, pattern BFS sub-strategy |
-| `Itemset-First-DFS-dfs` | Itemset-first DFS, pattern DFS sub-strategy |
-| `FD-First-BFS-bfs` | FD-first BFS, pattern BFS sub-strategy |
-| `FD-First-BFS-dfs` | FD-first BFS, pattern DFS sub-strategy |
-| `FD-First-DFS-bfs` | FD-first DFS, pattern BFS sub-strategy |
-| `FD-First-DFS-dfs` | FD-first DFS, pattern DFS sub-strategy (default, fastest) |
+| Strategy                | Description                                               |
+| ----------------------- | --------------------------------------------------------- |
+| `Integrated-BFS`        | CTane algorithm (BFS level-wise)                          |
+| `Integrated-DFS`        | Integrated DFS with free itemset pruning                  |
+| `Itemset-First-BFS-bfs` | Itemset-first BFS, pattern BFS sub-strategy               |
+| `Itemset-First-BFS-dfs` | Itemset-first BFS, pattern DFS sub-strategy               |
+| `Itemset-First-DFS-bfs` | Itemset-first DFS, pattern BFS sub-strategy               |
+| `Itemset-First-DFS-dfs` | Itemset-first DFS, pattern DFS sub-strategy               |
+| `FD-First-BFS-bfs`      | FD-first BFS, pattern BFS sub-strategy                    |
+| `FD-First-BFS-dfs`      | FD-first BFS, pattern DFS sub-strategy                    |
+| `FD-First-DFS-bfs`      | FD-first DFS, pattern BFS sub-strategy                    |
+| `FD-First-DFS-dfs`      | FD-first DFS, pattern DFS sub-strategy (default, fastest) |
 
 **input.txt format:**
+
 ```
 <sub-table filenames, space-separated>
 <minimum support threshold>
@@ -447,6 +438,7 @@ Supports **10 search strategies**, selectable via `input.txt`:
 ```
 
 **Example:**
+
 ```
 CENSUS42-10000.csv
 1994
@@ -456,6 +448,7 @@ FD-First-DFS-dfs
 ```
 
 **Run command:**
+
 ```bash
 # Compile
 cd parallel/SCFDM_all/cmake-build-debug
@@ -503,6 +496,7 @@ The C++ miners output CFDs in the following format (parsed by `verify.py` and `c
 ```
 
 Where:
+
 - `[A, B]` — LHS attributes
 - `C` — RHS attribute
 - `(a1, b1 || c1)` — LHS pattern values `||` RHS pattern value
@@ -525,13 +519,14 @@ Tighter than both Chebyshev and Bennett bounds, leveraging the variance of the B
 
 Three regimes based on the relationship between p̂ and the Chernoff ratio λ:
 
-| Regime | Condition | Bound |
-|---|---|---|
-| A (variance-augmented) | p̂ ≤ p̂₁ or p̂ > p̂₂, with 1/(24λ) ≥ 1 | Theorem 1 |
-| B (hybrid Chernoff) | p̂₁ < p̂ ≤ p̂₂ | N = (3/2)·ln(2/(1-η)) / ε² |
-| C (scaled variance) | 1/(24λ) < 1 | Theorem 1 / (1 − 1/(24λ)) |
+| Regime                 | Condition                          | Bound                      |
+| ---------------------- | ---------------------------------- | -------------------------- |
+| A (variance-augmented) | p̂ ≤ p̂₁ or p̂ > p̂₂, with 1/(24λ) ≥ 1 | Theorem 1                  |
+| B (hybrid Chernoff)    | p̂₁ < p̂ ≤ p̂₂                        | N = (3/2)·ln(2/(1-η)) / ε² |
+| C (scaled variance)    | 1/(24λ) < 1                        | Theorem 1 / (1 − 1/(24λ))  |
 
 Where:
+
 - p̂₁ = (1 − √(1 − 24λ)) / 2
 - p̂₂ = (1 + √(1 − 24λ)) / 2
 
@@ -569,11 +564,13 @@ The system implements a **negative-feedback control pipeline** that calibrates s
 ### Two-Category Hyperparameter System
 
 **Category 1 — Discovery Guarantee Parameters:**
+
 - β (recall guarantee) — target recall rate, default 0.90
 - ε (sampling error) — additive support error, default 0.005
 - τ (concentration switch) — inequality switching coefficient, default 0.05
 
 **Category 2 — Structural Partitioning Parameters:**
+
 - z (significance threshold) — default 3, raised to 5 under noise
 - γ₀ (retention density) — default 0.85, tightened to 0.80 under noise
 
@@ -653,68 +650,83 @@ Verifies mined CFDs against the full dataset by checking support and confidence 
 
 ### 12.1 Correlation Extraction Baselines
 
-| File | Method | Description |
-|---|---|---|
+| File                                                  | Method  | Description                                    |
+| ----------------------------------------------------- | ------- | ---------------------------------------------- |
 | `correlation/correlation_extraction_XGBoost_multi.py` | XGBoost | Feature importance-based attribute correlation |
-| `correlation/correlation_extraction_kamino_multi.py` | Kamino | Alternative correlation extraction |
-| `correlation_extraction_pearson_multi.py` | Pearson | Attribute correlation extraction |
+| `correlation/correlation_extraction_kamino_multi.py`  | Kamino  | Alternative correlation extraction             |
+| `correlation_extraction_pearson_multi.py`             | Pearson | Attribute correlation extraction               |
 
 **XGBoost baseline**: For each attribute Y, train an XGBoost model with all other attributes as features. Extract correlated attributes based on feature importance scores above threshold τ_c.
 
 ### 12.2 Sampling Baselines
 
-| File | Method | Description |
-|---|---|---|
-| `sampling/random_sampling.py` | Random | Uniform random sampling without replacement |
+| File                              | Method     | Description                                                |
+| --------------------------------- | ---------- | ---------------------------------------------------------- |
+| `sampling/random_sampling.py`     | Random     | Uniform random sampling without replacement                |
 | `sampling/Stratified_sampling.py` | Stratified | Stratified sampling based on attribute value distributions |
 
 ---
 
-### 12.3 Stage Breakdown
+## 13. End-to-End Pipeline Orchestration
 
-| Stage | Module | Output |
-|---|---|---|
-| 1. AttrFinder | correlation_extraction_tf_multi.py | correlated_sets.txt |
-| 2. Sampling Bound | sampling_bound.py | Minimum N |
-| 3. RepSampler | representative_tuple_sampling.py | sampled.csv |
-| 4. Sub-table Gen | generate_sub_tables.py | subtables/part*.csv |
-| 5. Parallel Mining | SCFDM_all (C++) | mined CFDs |
-| 6. Evaluation | metrics.py | Precision/Recall/F1 |
+### 13.1 Stage Breakdown
+
+| Stage              | Module                             | Output              |
+| ------------------ | ---------------------------------- | ------------------- |
+| 1. AttrFinder      | correlation_extraction_tf_multi.py | correlated_sets.txt |
+| 2. Sampling Bound  | sampling_bound.py                  | Minimum N           |
+| 3. RepSampler      | representative_tuple_sampling.py   | sampled.csv         |
+| 4. Sub-table Gen   | generate_sub_tables.py             | subtables/part*.csv |
+| 5. Parallel Mining | SCFDM_all (C++)                    | mined CFDs          |
+| 6. Evaluation      | metrics.py                         | Precision/Recall/F1 |
+
+### 13.2 Full Pipeline Script
+
+**File:** `correlation-and-sampling/supplemental/experiments/run_pipeline.py`
+
+```python
+# End-to-end orchestration
+python supplemental/experiments/run_pipeline.py \
+    --input datasets/RT_IoT2022.csv \
+    --output results/ \
+    --strategy FD-First-DFS-dfs \
+    --mpi_processes 30
+```
 
 ---
 
-## 13. Datasets
+## 14. Datasets
 
-### 13.1 Supported Datasets
+### 14.1 Supported Datasets
 
 We recommend the following datasets (configure paths in each script's `__main__`):
 
-| Dataset | Size | Attributes | Characteristics |
-|---|---|---|---|
-| RT-IoT2022 | ~123K rows | 12 | IoT network traffic, multi-class |
-| Adult (Census) | ~32K rows | 15 | Demographic data |
-| Abalone | ~4K rows | 9 | Physical measurements |
-| Bank Marketing | ~45K rows | 17 | Marketing campaign data |
-| Census Income (KDD) | ~100K rows | 42 | Large-scale census |
-| Flights (2015) | ~1M rows | 31 | Flight delays (large-scale) |
-| Crop Mapping | ~75K rows | 148 | High-dimensional agricultural |
-| CENSUS42 | 10K rows | 42 | Census subset |
-| Mushroom | ~8K rows | 23 | Fungi characteristics |
-| Nursery | ~13K rows | 9 | School application ranking |
-| Contraceptive | ~1.5K rows | 10 | Demographic survey |
-| Letter Recognition | 20K rows | 17 | Image features |
+| Dataset             | Size       | Attributes | Characteristics                  |
+| ------------------- | ---------- | ---------- | -------------------------------- |
+| RT-IoT2022          | ~123K rows | 12         | IoT network traffic, multi-class |
+| Adult (Census)      | ~32K rows  | 15         | Demographic data                 |
+| Abalone             | ~4K rows   | 9          | Physical measurements            |
+| Bank Marketing      | ~45K rows  | 17         | Marketing campaign data          |
+| Census Income (KDD) | ~100K rows | 42         | Large-scale census               |
+| Flights (2015)      | ~1M rows   | 31         | Flight delays (large-scale)      |
+| Crop Mapping        | ~75K rows  | 148        | High-dimensional agricultural    |
+| CENSUS42            | 10K rows   | 42         | Census subset                    |
+| Mushroom            | ~8K rows   | 23         | Fungi characteristics            |
+| Nursery             | ~13K rows  | 9          | School application ranking       |
+| Contraceptive       | ~1.5K rows | 10         | Demographic survey               |
+| Letter Recognition  | 20K rows   | 17         | Image features                   |
 
-### 13.2 Synthetic Bayesian Network Data
+### 14.2 Synthetic Bayesian Network Data
 
 Located in `correlation-and-sampling/datasets_synthetic/datasets/`:
 
-| Dataset | Source Network |
-|---|---|
-| `alarm.csv` | ALARM medical diagnostic network |
-| `barley.csv` | Barley disease network |
-| `barley_long.csv` | Extended barley network |
+| Dataset           | Source Network                   |
+| ----------------- | -------------------------------- |
+| `alarm.csv`       | ALARM medical diagnostic network |
+| `barley.csv`      | Barley disease network           |
+| `barley_long.csv` | Extended barley network          |
 
-### 13.3 Data Preprocessing
+### 14.3 Data Preprocessing
 
 Utility scripts for data preparation:
 
